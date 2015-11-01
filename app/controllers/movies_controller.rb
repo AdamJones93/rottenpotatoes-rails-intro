@@ -12,6 +12,24 @@ class MoviesController < ApplicationController
 
   def index
     @movies = Movie.all
+    @direct = false
+    
+    if params[:ratings]
+		@ratings = params[:ratings]
+	elsif session[:ratings]
+		@ratings = session[:ratings]
+		@direct = true
+	else
+		@ratings = { 'G' => '1', 'PG' => '1', 'PG-13' => '1', 'R' => '1', 'NC-17' => '1' }
+	end
+	
+	if @sort == 'title'
+		@movies = @movies.sort_by{ |movie| movie.title }
+	elsif @sort == 'release_date'
+		@movies = @movies.sort_by{ |movie| movie.release_date }
+	end
+	
+	instance_eval %Q" @hilite_#{params[:sort]} = true"
   end
 
   def new
