@@ -13,6 +13,7 @@ class MoviesController < ApplicationController
   def index
     @movies = Movie.all
     @direct = false
+    @all_ratings = Movie.all_ratings
     
     if params[:ratings]
 		@ratings = params[:ratings]
@@ -23,6 +24,27 @@ class MoviesController < ApplicationController
 		@ratings = { 'G' => '1', 'PG' => '1', 'PG-13' => '1', 'R' => '1', 'NC-17' => '1' }
 	end
 	
+	@selected = @ratings.keys
+	
+	if params[:sort]
+		@sort = params[:sort]
+	elsif session[:sort]
+		@sort = session[:sort]
+		@direct = true
+	else
+		@sort = 'title'
+	end
+	
+	if @direct
+		redirect_to movies_path(:sort => @sort, :ratings => @ratings)
+	end
+	
+	@movies = @movies.select{ |movie| @ratings.has_key?(movie.rating) }
+	
+	if params[:commit] == 'Refresh'
+		session[:ratings] = params[:ratings]
+	end
+	
 	if @sort == 'title'
 		@movies = @movies.sort_by{ |movie| movie.title }
 	elsif @sort == 'release_date'
@@ -30,6 +52,9 @@ class MoviesController < ApplicationController
 	end
 	
 	instance_eval %Q" @hilite_#{params[:sort]} = true"
+	
+	session[:sort] = @sort
+	session[:ratings] = @ratings
   end
 
   def new
